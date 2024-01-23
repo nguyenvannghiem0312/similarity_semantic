@@ -13,7 +13,7 @@ from losses.ContrastiveLoss import ContrastiveLoss
 from losses.SimilarityLoss import CosineSimilarityLoss
 from losses.TripletLoss import TripletLoss
 
-
+# from evaluation.BinaryClassification import BinaryClassificationEvaluator
 
 class Trainer: 
     def __init__(self, 
@@ -50,11 +50,11 @@ class Trainer:
         self.data_train = self.data_train()
 
         self.path_dataeval = path_dataeval
-        if self.path_dataeval:
+        self.data_eval = None
+        if len(self.path_dataeval) > 0:
             self.data_eval = SemanticDataset(path_dataeval[0], path_dataeval[1], path_dataeval[2], type_format=self.type_format)
-            self.data_eval = self.data_train()
+            self.data_eval = self.data_eval()
 
-        
         # train args
         self.batch_size= batch_size
         self.shuffle= shuffle
@@ -79,11 +79,10 @@ class Trainer:
             shuffle=self.shuffle
         )
 
-        if path_dataeval:
+        if self.data_eval != None:
             self.dataloader_eval= DataLoader(
                 self.data_eval,
-                batch_size=self.batch_size,
-                shuffle=self.shuffle
+                batch_size=self.batch_size
             )
 
         # mixer precision 
@@ -183,9 +182,18 @@ class Trainer:
         
         return (total_loss / total_count) * self.grad_accum
     
-    def _evaluate(self):
+    def _evaluate(self): 
+        self.model.eval()
+        total_loss, total_count= 0, 0
+        with torch.no_grad(): 
+            for idx, data in enumerate(self.dataloader_eval): 
+                loss= self.compute_loss(data)
+                total_loss += loss.item() 
+                if self.use_wandb: 
+                    wandb.log({"Eval loss": loss.item()})
+                total_count += 1 
         
-        pass 
+        return total_loss / total_count 
 
     def fit(self, logging_step:Type[int]= 100, step_save: Type[int]= 1000, path_ckpt_epoch: Type[str]= 'best_ckpt.pt'):
         print(' START ')
@@ -195,7 +203,7 @@ class Trainer:
             print(f' EPOCH {epoch} ')
             train_loss= self._train_on_epoch(index_grad, logging_step, step_save)
             print(f'End of epoch {epoch} - loss: {train_loss}')            
-            if self.path_dataeval:
+            if len(self.path_dataeval) > 0:
                 print(' EVALUATE ')
                 val_loss= self._evaluate()
                 print(f'Evaluate loss: {val_loss}')

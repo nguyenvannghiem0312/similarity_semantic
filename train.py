@@ -18,7 +18,7 @@ if __name__ == "__main__":
     trainer= Trainer(model= model,
                     tokenizer_name= 'vinai/phobert-base-v2',
                     path_datatrain= ['Embedding/data/contexts.json', 'Embedding/data/questions.json', 'Embedding/data/train_triples_ids.csv'], 
-                    path_dataeval= None,
+                    path_dataeval= ['Embedding/data/contexts.json', 'Embedding/data/questions.json', 'Embedding/data/test_triples_ids.csv'],
                     batch_size= 2, 
                     shuffle= True, 
                     num_workers= 16,
