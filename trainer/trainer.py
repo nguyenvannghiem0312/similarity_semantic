@@ -1,14 +1,13 @@
 import os 
 from typing import Type, Optional, List
 import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader
 from torch.cuda.amp import autocast, GradScaler 
 from transformers.optimization import get_cosine_schedule_with_warmup
 import wandb 
-from model.model import BiEncoder
+
 from loaders.dataloader import DataTokenizer
-from loaders.datasets import TripletDataset
+from loaders.datasets import SemanticDataset
 
 from losses.ContrastiveLoss import ContrastiveLoss
 from losses.SimilarityLoss import CosineSimilarityLoss
@@ -37,7 +36,8 @@ class Trainer:
         epochs: Optional[int]= 1, 
         loss: Optional[str]='triplet',
         path_ckpt_step: Optional[str]= 'checkpoint.pt',
-        use_wandb: bool= True  
+        use_wandb: bool= True,
+        type_format = 'A'
         ):
 
         # base 
@@ -45,14 +45,14 @@ class Trainer:
         self.tokenizer= DataTokenizer(tokenizer_model=tokenizer_name)
         
         # dataset
-        self.type_format = 'B'
-        self.data_train = TripletDataset(path_datatrain[0], path_datatrain[1], path_datatrain[2])
-        self.data_train = self.data_train(type_format=self.type_format)
+        self.type_format = type_format
+        self.data_train = SemanticDataset(path_datatrain[0], path_datatrain[1], path_datatrain[2], type_format=self.type_format)
+        self.data_train = self.data_train()
 
         self.path_dataeval = path_dataeval
         if self.path_dataeval:
-            self.data_eval = TripletDataset(path_dataeval[0], path_dataeval[1], path_dataeval[2])
-            self.data_eval = self.data_train(type_format=self.type_format)
+            self.data_eval = SemanticDataset(path_dataeval[0], path_dataeval[1], path_dataeval[2], type_format=self.type_format)
+            self.data_eval = self.data_train()
 
         
         # train args
@@ -184,7 +184,7 @@ class Trainer:
         return (total_loss / total_count) * self.grad_accum
     
     def _evaluate(self):
-
+        
         pass 
 
     def fit(self, logging_step:Type[int]= 100, step_save: Type[int]= 1000, path_ckpt_epoch: Type[str]= 'best_ckpt.pt'):

@@ -5,16 +5,54 @@ from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from loaders.datareader import DataReader 
 
-class TripletDataset(Dataset): 
+class SemanticDataset(Dataset): 
     def __init__(self, 
                  path_data_contexts: str,
                  path_data_questions: str,
                  path_data_triples_ids: str,
+                 type_format = 'A',
+                 tokenizer_model = 'vinai/phobert-base-v2',
+                 max_length=256
                 ):
+        
+        self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_model)
+        self.max_length = max_length
+
         self.contexts = DataReader(path_data_contexts).read()
         self.questions = DataReader(path_data_questions).read()
         self.triples_ids = DataReader(path_data_triples_ids).read()
+        
+        self.type_format = type_format
+        self.data = None
+        
 
+    def __len__(self):
+        return len(self.data)
+    
+    
+    def __getitem__(self, index):
+        if self.type_format == 'A':
+            text1, text2, label = self.data[index]['text1'], self.data[index]['text2'], self.data[index]['label']
+            return {
+                't_1': self._tokenizer(text1),
+                't_2': self._tokenizer(text2),
+                'label': label.clone().detach()
+            }
+        if self.type_format == 'B':
+            text, positive, negative = self.data[index]['text'], self.data[index]['positive'], self.data[index]['negative']
+            return {
+                't': self._tokenizer(text),
+                'pos': self._tokenizer(positive),
+                'neg': self._tokenizer(negative)
+            }
+        return super().__getitem__(index)
+    
+    def _tokenizer(self, text):
+        return self.tokenizer(text, truncation=True, padding='max_length', return_tensors='pt', max_length=self.max_length)
+    
+    def _max_length(self):
+        return self.max_length
+        
     def convert_to_format_text_text_label(self):
         results = []
         for query_id, pos_id, neg_id in self.triples_ids:
@@ -34,20 +72,10 @@ class TripletDataset(Dataset):
             results.append({'text': text, 'positive': positive, 'negative': negative})
         return results
     
-    def __call__(self, type_format = 'A'):
-        if type_format == 'A': 
-            return self.convert_to_format_text_text_label()
-        if type_format == 'B':
-            return self.convert_to_text_positive_negative()
-        assert type_format != 'A' and type_format != 'B', "Type format must be: 'A' or 'B'"
-    
-
-# def main():
-#     contexts_file_path = 'Embedding/data/contexts.json'
-#     questions_file_path = 'Embedding/data/questions.json'
-#     triples_ids_file_path = 'Embedding/data/train_triples_ids.csv'
-#     data_loader = ConvertFormatDataset(contexts_file_path, questions_file_path, triples_ids_file_path)
-#     data = data_loader(type_format='B')
-#     print(data)
-# main()
+    def __call__(self):
+        if self.type_format == 'A':
+            self.data = self.convert_to_format_text_text_label()
+        elif self.type_format == 'B':
+            self.data = self.convert_to_text_positive_negative()
+        return self.data
     

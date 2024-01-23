@@ -34,8 +34,9 @@ if __name__ == "__main__":
                     path_ckpt_step= 'test.pt', 
                     device= device,
                     use_wandb=False,
-                    loss= 'triplet', 
+                    loss= 'cosine_similarity', 
+                    type_format='A'
                 )
     trainer.fit(step_save= 1000,
-                path_ckpt_epoch= 'epochs.pt',
+                path_ckpt_epoch= '_epochs.pt',
                 logging_step = 10)
