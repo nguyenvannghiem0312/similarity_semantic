@@ -4,6 +4,7 @@ import torch
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from loaders.datareader import DataReader 
+from model.model import BiEncoder
 
 class SemanticDataset(Dataset): 
     def __init__(self, 
@@ -25,6 +26,10 @@ class SemanticDataset(Dataset):
         self.type_format = type_format
         self.data = None
         
+        if self.type_format == 'A':
+            self.data = self.convert_to_format_text_text_label()
+        elif self.type_format == 'B':
+            self.data = self.convert_to_text_positive_negative()
 
     def __len__(self):
         return len(self.data)
@@ -36,7 +41,7 @@ class SemanticDataset(Dataset):
             return {
                 't_1': self._tokenizer(text1),
                 't_2': self._tokenizer(text2),
-                'label': label.clone().detach()
+                'label': torch.tensor(label)
             }
         if self.type_format == 'B':
             text, positive, negative = self.data[index]['text'], self.data[index]['positive'], self.data[index]['negative']
@@ -79,3 +84,4 @@ class SemanticDataset(Dataset):
             self.data = self.convert_to_text_positive_negative()
         return self.data
     
+

@@ -16,6 +16,9 @@ class DataTokenizer:
     def _max_length(self):
         return self.max_length
     
+    def save_tok(self, path):
+        return self.tokenizer.save_pretrained(path)
+    
     def __call__(self, data, type_format='A'):
         if type_format == 'A':
             text1, text2, label = data['text1'], data['text2'], data['label']
