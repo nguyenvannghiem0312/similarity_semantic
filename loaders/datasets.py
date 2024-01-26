@@ -4,7 +4,6 @@ import torch
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 from loaders.datareader import DataReader 
-from model.model import BiEncoder
 
 class SemanticDataset(Dataset): 
     def __init__(self, 

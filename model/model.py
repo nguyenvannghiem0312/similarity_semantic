@@ -39,4 +39,6 @@ class BiEncoder(torch.nn.Module):
             return pooler_output
         if self.pooler == "mean":
             return ((last_hidden * inputs['attention_mask'].unsqueeze(-1)).sum(1) / inputs['attention_mask'].sum(-1).unsqueeze(-1))
+        elif self.pooler == 'cls_before_pooler':
+            return last_hidden[:, 0]
     

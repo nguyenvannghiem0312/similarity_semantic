@@ -15,7 +15,7 @@ if __name__ == "__main__":
     device= torch.device("cuda") 
 
     model_name = 'vinai/phobert-base-v2'
-    model= BiEncoder(model_name = model_name, required_grad= True, pooler = "cls")
+    model= BiEncoder(model_name = model_name, required_grad= True, pooler = "cls_before_pooler")
     type_format = 'A'
     model.to(device)
 
@@ -58,7 +58,7 @@ if __name__ == "__main__":
                     device= device,
                     use_wandb=False,
                     loss= 'cosine_similarity', 
-                    type_format=type_format
+                    type_format=type_format,
                 )
-    trainer.fit(step_save= 1000,
+    trainer.fit(step_save= 100,
                 logging_step = 10)

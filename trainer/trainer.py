@@ -22,7 +22,6 @@ class Trainer:
         dataloader_train,
         dataloader_eval,
         device: Type[torch.device], 
-        # batch_size: int = 8, 
         shuffle: Optional[bool]= True, 
         num_workers: int= 16, 
         pin_memory: Optional[bool]= True, 
@@ -46,19 +45,8 @@ class Trainer:
         self.dataloader_train = dataloader_train
         self.dataloader_eval = dataloader_eval
         self.type_format = type_format
-        # dataset
-        # self.type_format = type_format
-        # self.data_train = SemanticDataset(path_datatrain[0], path_datatrain[1], path_datatrain[2], type_format=self.type_format)
-        # # self.data_train = self.data_train()
-
-        # self.path_dataeval = path_dataeval
-        # self.data_eval = None
-        # if len(self.path_dataeval) > 0:
-        #     self.data_eval = SemanticDataset(path_dataeval[0], path_dataeval[1], path_dataeval[2], type_format=self.type_format)
-            # self.data_eval = self.data_eval()
 
         # train args
-        # self.batch_size= batch_size
         self.shuffle= shuffle
         self.num_workers= num_workers
         self.pin_memory= pin_memory
@@ -164,12 +152,7 @@ class Trainer:
                 index_grad[0] += 1 
 
             if (self.global_step + 1) % (step_save * self.grad_accum) ==0:
-                self.save_model(save_directory=save_directory + f'/{self.global_step + 1}')
-                # torch.save({'step': idx + 1,
-                #             'model_state_dict': self.model.state_dict(),
-                #             'optimizer_state_dict': self.optimizer.state_dict(),
-                #             'scheduler': self.scheduler.state_dict(),
-                #                 },  self.ckpt_step)
+                self.save_model(save_directory=save_directory + f'/{(self.global_step + 1) / (self.grad_accum)}')
         
         return (total_loss / total_count) * self.grad_accum
     
@@ -205,18 +188,7 @@ class Trainer:
                     log_loss = val_loss
                     print(f'Saving checkpoint have best {log_loss}')
                     self.save_model(save_directory=save_directory + f'/epochs{epoch}')
-                    # torch.save({'epoch': epoch, 
-                    #             'model_state_dict': self.model.state_dict(), 
-                    #             'scheduler': self.scheduler.state_dict()}, 
-                    #             path_ckpt_epoch)
-
-            # if train_loss < log_loss: 
-            #     log_loss = train_loss
-            #     print(f'Saving checkpoint have best {log_loss}')
-            #     torch.save({'epoch': epoch, 
-            #                 'model_state_dict': self.model.state_dict(), 
-            #                 'scheduler': self.scheduler.state_dict()},
-            #                 path_ckpt_epoch)
+            
         self.save_model(save_directory=save_directory + '/model')
                 
     def save_model(self, save_directory: Type[str]= 'model'):
